@@ -22,21 +22,21 @@ from graders import MotPE, NFGC, Help, TNTRun
 # corresponding to different bots (you may also use the same source file
 # multiple times, to create multiple instances of the same bot).
 
-scores = []
-tests = []
+# scores = []
+# tests = []
 
-for _ in range(0, 10):
-    test = MotPE().test(gen=("random", 10), source="bots/motpe_starter.py", name="starter_random", save_replay=True, record_logs=True)
-    tests.append(test)
-    scores.append(test["summary"])
-average_score = sum(scores) / len(scores)
-print(f"Average score: {average_score}")
-print(f"Highest score: {max(scores)}")
-print(f"Lowest score: {min(scores)}")
-print(f"Median score: {scores[len(scores) // 2]}")
+# for _ in range(0, 10):
+#     test = MotPE().test(gen=("random", 10), source="bots/motpe_starter.py", name="starter_random", save_replay=True, record_logs=True)
+#     tests.append(test)
+#     scores.append(test["summary"])
+# average_score = sum(scores) / len(scores)
+# print(f"Average score: {average_score}")
+# print(f"Highest score: {max(scores)}")
+# print(f"Lowest score: {min(scores)}")
+# print(f"Median score: {scores[len(scores) // 2]}")
 
 # MotPE().test(gen=("random", 10), source="bots/motpe_starter.py", name="starter_random", save_replay=True, record_logs=True)
-# MotPE().test(gen=("circles", 4), source="bots/motpe_starter.py", name="starter_circles", save_replay=True, record_logs=False)
+MotPE().test(gen=("circles", 4), source="bots/motpe_starter.py", name="starter_circles", save_replay=True, record_logs=False)
 # MotPE().test(gen=("path", 16), source="bots/motpe_starter.py", name="starter_path", save_replay=True, record_logs=False)
 
 # Help().test(source="bots/help_starter.py", name="starter_test", save_replay=True, seed=1337, gen=None, record_logs=False)

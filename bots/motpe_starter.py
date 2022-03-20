@@ -4,6 +4,9 @@ import json
 import random
 from tkinter import E
 
+HEIGHT_BITS = 7
+DELTA_BITS = 3
+
 # INPUT FORMAT (as tower):
 '''
     "role": "tower"
@@ -273,7 +276,7 @@ def get_best_direction(row, col):
     right_max_height = 0
     right_max_column = col+1
 
-    for move in range(1, 8):
+    for move in range(1, pow(2, DELTA_BITS)):
         new_col = col - move
         if airspace[row][new_col] == 1:
             break
@@ -284,7 +287,7 @@ def get_best_direction(row, col):
             left_max_height = highest
             left_max_column = new_col
     
-    for move in range(1, 8):
+    for move in range(1, pow(2, DELTA_BITS)):
         new_col = col + move
         if airspace[row][new_col] == 1:
             break
@@ -302,90 +305,141 @@ def get_best_direction(row, col):
 
     direction = "Right" if best_direction == 1 else "Left"
 
-    print(" Best Direction:", direction, file = sys.stderr)
+    # print(" Best Direction:", direction, file = sys.stderr)
 
-    print(" Left Max Height:", left_max_height, file = sys.stderr)
-    print(" Left Max Column:", left_max_column, file = sys.stderr)
+    # print(" Left Max Height:", left_max_height, file = sys.stderr)
+    # print(" Left Max Column:", left_max_column, file = sys.stderr)
 
-    print(" Right Max Height:", right_max_height, file = sys.stderr)
-    print(" Right Max Column:", right_max_column, file = sys.stderr)
+    # print(" Right Max Height:", right_max_height, file = sys.stderr)
+    # print(" Right Max Column:", right_max_column, file = sys.stderr)
 
     return [best_direction, left_max_column, right_max_column]
 
-if role == "tower":
-    # Can read variable "airspace", but not "bits"
-    #print("airspace", ''.join(map(str, airspace[255])), file = sys.stderr) # example print
-
+def create_bits_array_from_airspace():
     output = []
     
     starting_col = get_highest_starting_column()
     starting_binary = str(get_binary(starting_col))
     current_pos = [255, starting_col]
 
-    print("Starting Position", current_pos, file = sys.stderr)
+    print("Starting Col Given: ", starting_col, file = sys.stderr)
+
+    print("Starting Highest Position: ", highest_up_from_point(current_pos[0], current_pos[1]), file = sys.stderr)
 
     for bit in starting_binary:
         output.append(int(bit))
 
-    highest_possible = highest_up_from_point(255, starting_col) - 2
+    while len(output) < 64 and airspace[current_pos[0]][current_pos[1]] == 0:
+        highest_possible = highest_up_from_point(current_pos[0], current_pos[1])
 
-    for bit in str(get_binary(highest_possible, 7)):  
-        output.append(int(bit))
+        for bit in str(get_binary(highest_possible, HEIGHT_BITS)):
+            if len(output) < 64:
+                output.append(int(bit))
 
-    current_pos[0] -= highest_possible
+        print("Highest Possible Given: ", highest_possible, file = sys.stderr)
+        print("Highest Possible Given Binary: ", get_binary(highest_possible, 7), file = sys.stderr)
 
-    print("Current Position:", current_pos, file = sys.stderr)
+        current_pos[0] -= highest_possible - 1
 
-    best_direction = get_best_direction(current_pos[0], current_pos[1])
-    dir_to_move = "right" if best_direction[0] == 1 else "left"
+        best_direction = get_best_direction(current_pos[0], current_pos[1])
+        dir_to_move = "right" if best_direction[0] == 1 else "left"
 
-    output.append(int(best_direction[0]))
+        print("Best Direction: ", dir_to_move, file = sys.stderr)
 
-    print("Direction to move:", dir_to_move, file = sys.stderr)
+        if len(output) < 64:
+            output.append(int(best_direction[0]))
+        
+        column_wanted = best_direction[1] if dir_to_move == "left" else best_direction[2]
+        delta_col = column_wanted - current_pos[1]
 
-    column_wanted = best_direction[1] if dir_to_move == "left" else best_direction[2]
-    delta_col = column_wanted - current_pos[1]
+        print("Delta Column: ", delta_col, file = sys.stderr)
 
-    print("Amount to Move:", delta_col, file = sys.stderr)
-    print("Amount to move bits:" + str(get_binary(abs(delta_col), 3)), file = sys.stderr)
+        delta_binary = str(get_binary(abs(delta_col), 3))
 
-    delta_binary = str(get_binary(abs(delta_col), 3))
+        for bit in delta_binary:
+            if len(output) < 64:
+                output.append(int(bit))
 
-    for bit in delta_binary:
-        output.append(int(bit))
+        current_pos[1] += delta_col
+        
+    return output
 
-    current_pos[1] += delta_col
 
-    print("Current Position:", current_pos, file = sys.stderr)
 
-    highest_possible = highest_up_from_point(current_pos[0], current_pos[1])
-    print("Highest Possible:", highest_possible, file = sys.stderr)
-    for bit in str(get_binary(highest_possible, 7)):
-        output.append(int(bit))
+if role == "tower":
+    # Can read variable "airspace", but not "bits"
+    #print("airspace", ''.join(map(str, airspace[255])), file = sys.stderr) # example print
 
-    current_pos[0] -= highest_possible
+    # output = []
     
-    best_direction = get_best_direction(current_pos[0], current_pos[1])
-    dir_to_move = "right" if best_direction[0] == 1 else "left"
+    # starting_col = get_highest_starting_column()
+    # starting_binary = str(get_binary(starting_col))
+    # current_pos = [255, starting_col]
 
-    output.append(int(best_direction[0]))
+    # print("Starting Position", current_pos, file = sys.stderr)
 
-    print("Direction to move:", dir_to_move, file = sys.stderr)
+    # for bit in starting_binary:
+    #     output.append(int(bit))
 
-    column_wanted = best_direction[1] if dir_to_move == "left" else best_direction[2]
-    delta_col = column_wanted - current_pos[1]
+    # highest_possible = highest_up_from_point(255, starting_col) - 2
 
-    print("Amount to Move:", delta_col, file = sys.stderr)
-    print("Amount to move bits:" + str(get_binary(abs(delta_col), 3)), file = sys.stderr)
+    # for bit in str(get_binary(highest_possible, 7)):  
+    #     output.append(int(bit))
 
-    delta_binary = str(get_binary(abs(delta_col), 3))
+    # current_pos[0] -= highest_possible
 
-    for bit in delta_binary:
-        output.append(int(bit))
+    # print("Current Position:", current_pos, file = sys.stderr)
 
-    current_pos[1] += delta_col
+    # best_direction = get_best_direction(current_pos[0], current_pos[1])
+    # dir_to_move = "right" if best_direction[0] == 1 else "left"
 
+    # output.append(int(best_direction[0]))
 
+    # print("Direction to move:", dir_to_move, file = sys.stderr)
+
+    # column_wanted = best_direction[1] if dir_to_move == "left" else best_direction[2]
+    # delta_col = column_wanted - current_pos[1]
+
+    # print("Amount to Move:", delta_col, file = sys.stderr)
+    # print("Amount to move bits:" + str(get_binary(abs(delta_col), 3)), file = sys.stderr)
+
+    # delta_binary = str(get_binary(abs(delta_col), 3))
+
+    # for bit in delta_binary:
+    #     output.append(int(bit))
+
+    # current_pos[1] += delta_col
+
+    # print("Current Position:", current_pos, file = sys.stderr)
+
+    # highest_possible = highest_up_from_point(current_pos[0], current_pos[1])
+    # print("Highest Possible:", highest_possible, file = sys.stderr)
+    # for bit in str(get_binary(highest_possible, 7)):
+    #     output.append(int(bit))
+
+    # current_pos[0] -= highest_possible
+    
+    # best_direction = get_best_direction(current_pos[0], current_pos[1])
+    # dir_to_move = "right" if best_direction[0] == 1 else "left"
+
+    # output.append(int(best_direction[0]))
+
+    # print("Direction to move:", dir_to_move, file = sys.stderr)
+
+    # column_wanted = best_direction[1] if dir_to_move == "left" else best_direction[2]
+    # delta_col = column_wanted - current_pos[1]
+
+    # print("Amount to Move:", delta_col, file = sys.stderr)
+    # print("Amount to move bits:" + str(get_binary(abs(delta_col), 3)), file = sys.stderr)
+
+    # delta_binary = str(get_binary(abs(delta_col), 3))
+
+    # for bit in delta_binary:
+    #     output.append(int(bit))
+
+    # current_pos[1] += delta_col
+
+    tower_output(create_bits_array_from_airspace())
 
 
     # while len(output) < 64:
@@ -455,8 +509,6 @@ if role == "tower":
 
     #     current_pos[1] = best_direction[1] if best_direction[0] == 0 else best_direction[2]
 
-    tower_output(output)
-
 def print_bits(bits):
     print("Bits", "".join(map(str, bits)), file = sys.stderr)
 
@@ -490,7 +542,48 @@ def convert_bits_to_moves(bits):
     return moves_to_return
 
 
+bit_group_types = (
+    "rotate_dir",
+    "shift_amount",
+    "up_amount",
+)
 
+def consume_bits(bits, amount):
+    if len(bits) < amount:
+        raise Exception("Not enough bits!")
+
+    consumed = bits[0:amount]
+    
+    return (consumed, bits[amount:])
+
+def get_moves_from_bits(bits):
+    moves = []
+
+    while len(bits) > 0:
+        try:
+            consumed, result = consume_bits(bits, 1)
+            bits = result
+            
+            rotate_dir = "L" if consumed[0] == 0 else "R"
+
+            consumed, result = consume_bits(bits, DELTA_BITS)
+            bits = result
+
+            for _ in range(int("".join(map(str, consumed)), 2)):
+                moves.append(rotate_dir)
+
+            consumed, result = consume_bits(bits, HEIGHT_BITS)
+            bits = result
+
+            print("Read Heigh Binary", consumed, file = sys.stderr)
+            print("Read Height", int("".join(map(str, consumed)), 2), file = sys.stderr)
+
+            for _ in range(int("".join(map(str, consumed)), 2) - 3):
+                moves.append("U")
+        except:
+            break
+
+    return moves
 
 if role == "drone":
     # Can read variable "bits", but not "airspace"
@@ -572,52 +665,65 @@ if role == "drone":
     # Read first 8 bits
     starting_col = int("".join(map(str, bits[0:8])), 2)
 
+    print("Starting Col Read: ", starting_col, file = sys.stderr)
+
     bits = bits[8:]
 
     print_bits(bits)
 
-    # Get how far to first move from 7 bits
-    first_move = int("".join(map(str, bits[0:7])), 2)
+    print("First Move Given Binary: ", bits[0:HEIGHT_BITS], file = sys.stderr)
 
-    for _ in range(first_move):
+    # Get how far to first move from 7 bits
+    first_move = int("".join(map(str, bits[0:HEIGHT_BITS])), 2)
+
+    print("First Move: " + str(first_move), file = sys.stderr)
+
+    for _ in range(first_move - 1):
         moves.append("U")
 
-    bits = bits[7:]
+    bits = bits[HEIGHT_BITS:]
 
-    while True:
-        try:
-            direction_to_move = bits[0]
-            bits = bits[1:]
+    rest_of_moves = get_moves_from_bits(bits)
 
-            print_bits(bits)
+    print("Generated moves: ", rest_of_moves, file = sys.stderr)
 
-            print("Amount to move H bits:" + "".join(map(str, bits[0:3])), file = sys.stderr)
+    for move in rest_of_moves:
+        moves.append(move)
+
+    # while True:
+    #     try:
+    #         direction_to_move = bits[0]
+    #         bits = bits[1:]
+
+    #         print_bits(bits)
+
+    #         print("Amount to move H bits:" + "".join(map(str, bits[0:3])), file = sys.stderr)
                     
-            amount_to_move_h = int("".join(map(str, bits[0:3])), 2)
-            bits = bits[3:]
+    #         amount_to_move_h = int("".join(map(str, bits[0:3])), 2)
+    #         bits = bits[3:]
 
-            print_bits(bits)
+    #         print_bits(bits)
 
-            print("Amount to move H:", amount_to_move_h, file = sys.stderr)
+    #         print("Amount to move H:", amount_to_move_h, file = sys.stderr)
                     
-            for _ in range(amount_to_move_h):
-                if direction_to_move != 1:
-                    moves.append("L")
-                else:
-                    moves.append("R")
+    #         for _ in range(amount_to_move_h):
+    #             if direction_to_move != 1:
+    #                 moves.append("L")
+    #             else:
+    #                 moves.append("R")
 
-            amount_to_move_v = int("".join(map(str, bits[0:7])), 2)
+    #         amount_to_move_v = int("".join(map(str, bits[0:7])), 2)
 
-            print("Amount to move V:", amount_to_move_v, file = sys.stderr)
+    #         print("Amount to move V:", amount_to_move_v, file = sys.stderr)
 
-            for _ in range(amount_to_move_v):
-                moves.append("U")
+    #         for _ in range(amount_to_move_v):
+    #             moves.append("U")
 
-            bits = bits[7:]
+    #         bits = bits[7:]
 
-            print("Length: " + str(len(bits)), file = sys.stderr)
-        except:
-            break
+    #         print("Length: " + str(len(bits)), file = sys.stderr)
+    #     except:
+    #         break
     
     print("Moves: ", "".join(map(str, moves)), file = sys.stderr)
 
